@@ -157,13 +157,11 @@ jobs:
         if: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/dev' }}
         id: tag-version-non-develop
         run: |
-          # Fetch the latest tag
-          LATEST_TAG=$(git tag --sort=v:refname | tail -n 1)
-          
-          # Remove the '-develop.<number>' or '-dev.<number>' suffix if it exists
-          NEW_TAG=$(echo "$LATEST_TAG" | sed -E 's/-(develop|dev)\.[0-9]+$//')
-          
-          echo "NEW_TAG=$NEW_TAG" >> "$GITHUB_OUTPUT"
+          # Exclude develop/dev pre-release tags — fetch-depth: 0 pulls all tags from all branches,
+          # and pre-release tags like 1.0.0-develop.1 sort higher than real releases like 0.9.x
+          LATEST_TAG=$(git tag --sort=v:refname | grep -vE '-(develop|dev)\.[0-9]+$' | tail -n 1)
+
+          echo "NEW_TAG=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Get release tag version (develop)
         if: ${{ github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/dev' }}
