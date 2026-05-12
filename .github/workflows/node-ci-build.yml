@@ -159,7 +159,8 @@ jobs:
         run: |
           # Exclude develop/dev pre-release tags — fetch-depth: 0 pulls all tags from all branches,
           # and pre-release tags like 1.0.0-develop.1 sort higher than real releases like 0.9.x
-          LATEST_TAG=$(git tag --sort=v:refname | grep -vE '-(develop|dev)\.[0-9]+$' | tail -n 1)
+          # `--` terminates grep option parsing so the leading `-` in the pattern is not read as a flag (grep 3.8+ on ubuntu-24 is strict).
+          LATEST_TAG=$(git tag --sort=v:refname | grep -vE -- '-(develop|dev)\.[0-9]+$' | tail -n 1)
 
           echo "NEW_TAG=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
