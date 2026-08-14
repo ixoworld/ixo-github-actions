@@ -3,14 +3,6 @@ name: Build and Release
 on:
   workflow_call:
     inputs:
-      # Runner for the heavy jobs: this input, else the CI_RUNNER org variable, else ubuntu-latest.
-      # `vars` resolves against the caller's org, so only orgs with a paid fleet (e.g. Blacksmith)
-      # set CI_RUNNER -- same commit, different runner per org. Unknown labels queue, never fall back.
-      runner:
-        required: false
-        type: string
-        default: ''
-        description: 'Runner label for the release/build/scan jobs. Defaults to the CI_RUNNER org variable, then ubuntu-latest.'
       docker_image_scanning:
         required: false
         type: boolean
@@ -138,7 +130,7 @@ jobs:
       packages: write
       pull-requests: write
     timeout-minutes: 20
-    runs-on: ${{ inputs.runner || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
       published: ${{ steps.changeset.outputs.published || steps.snapshot.outputs.published }}
       publishedPackages: ${{ steps.changeset.outputs.publishedPackages || steps.snapshot.outputs.publishedPackages }}
@@ -204,7 +196,7 @@ jobs:
           NPM_TOKEN: ${{secrets.npm_token}}
   release-docker:
     name: 'Build and Release Docker Image(s)'
-    runs-on: ${{ inputs.runner || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [release, branch-mapping]
     if: needs.release.outputs.published == 'true'
     strategy:
@@ -240,7 +232,7 @@ jobs:
             ${{ steps.set-image-name.outputs.image_name }}:latest
   security-scan:
     name: 'Docker Security Scan'
-    runs-on: ${{ inputs.runner || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [release, release-docker, branch-mapping]
     if: needs.release.outputs.published == 'true' && inputs.docker_image_scanning
     continue-on-error: true

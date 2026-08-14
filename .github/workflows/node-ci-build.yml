@@ -27,14 +27,6 @@ on:
         type: string
         description: 'For builds in sub-directories, provide the path. Leave empty for repo root.'
         default: ''
-      # Runner for the heavy jobs: this input, else the CI_RUNNER org variable, else ubuntu-latest.
-      # `vars` resolves against the caller's org, so only orgs with a paid fleet (e.g. Blacksmith)
-      # set CI_RUNNER -- same commit, different runner per org. Unknown labels queue, never fall back.
-      runner:
-        required: false
-        type: string
-        default: ''
-        description: 'Runner label for the release/build/scan jobs. Defaults to the CI_RUNNER org variable, then ubuntu-latest.'
 
 permissions:
   contents: write
@@ -68,7 +60,7 @@ jobs:
           fi
   release:
     name: 'Semantic Release NodeJS'
-    runs-on: ${{ inputs.runner || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: validate-commit
     if: ${{ needs.validate-commit.outputs.is_merge_commit == 'false' }}
     strategy:
@@ -167,7 +159,7 @@ jobs:
 
   release-docker:
     name: 'Build and Release Docker Image'
-    runs-on: ${{ inputs.runner || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: release
     env:
       IMAGE_NAME: ${{ github.repository }}:${{ needs.release.outputs.NEW_TAG }}
@@ -196,7 +188,7 @@ jobs:
 
   security-scan:
     name: 'Docker Security Scan'
-    runs-on: ${{ inputs.runner || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [release, release-docker]
     if: ${{ inputs.docker_image_scanning }}
     continue-on-error: false
